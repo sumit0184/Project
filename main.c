@@ -58,4 +58,65 @@ int main(void) {
   /* USER CODE END 3 */
 }
 
-// ... (rest of your existing code remains unchanged)
+
+
+/* USER CODE BEGIN PV */
+// Define GPIO pins for the buzzer and button
+#define BUZZER_PIN GPIO_PIN_5
+#define BUZZER_GPIO_PORT GPIOA
+#define BUTTON_PIN GPIO_PIN_13
+#define BUTTON_GPIO_PORT GPIOC
+/* USER CODE END PV */
+
+// ... (previous code)
+
+static void MX_GPIO_Init(void) {
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+    // ... (existing GPIO initialization code)
+
+    /* USER CODE BEGIN 2 */
+    // Buzzer GPIO Initialization
+    GPIO_InitStruct.Pin = BUZZER_PIN;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_Init(BUZZER_GPIO_PORT, &GPIO_InitStruct);
+
+    // Button GPIO Initialization
+    GPIO_InitStruct.Pin = BUTTON_PIN;
+    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(BUTTON_GPIO_PORT, &GPIO_InitStruct);
+    /* USER CODE END 2 */
+}
+
+int main(void) {
+    // ... (previous initialization code)
+
+    /* USER CODE BEGIN 2 */
+    // Additional initialization if needed
+    /* USER CODE END 2 */
+
+    /* Infinite loop */
+    /* USER CODE BEGIN WHILE */
+    while (1) {
+        /* USER CODE BEGIN 3 */
+        // Check button state
+        if (HAL_GPIO_ReadPin(BUTTON_GPIO_PORT, BUTTON_PIN) == GPIO_PIN_SET) {
+            // If button is pressed, turn on the buzzer
+            HAL_GPIO_WritePin(BUZZER_GPIO_PORT, BUZZER_PIN, GPIO_PIN_SET);
+        } else {
+            // If button is not pressed, turn off the buzzer
+            HAL_GPIO_WritePin(BUZZER_GPIO_PORT, BUZZER_PIN, GPIO_PIN_RESET);
+        }
+
+        // Additional application code as needed
+
+        HAL_Delay(10); // Delay for debouncing and to prevent CPU hogging
+    }
+    /* USER CODE END 3 */
+}
+
+
+
