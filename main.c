@@ -6,15 +6,20 @@
 #include "stm32f4xx_hal.h" // Adjust include path based on your HAL
 
 /* USER CODE BEGIN Includes */
-#include "lcd_i2c.h" // Replace with your actual LCD library header
+#include "lcd_i2c.h" // Include your LCD library here
 /* USER CODE END Includes */
 
 /* USER CODE BEGIN PV */
-// Define GPIO pins for the buzzer and button
 #define BUZZER_PIN GPIO_PIN_5
 #define BUZZER_GPIO_PORT GPIOA
 #define BUTTON_PIN GPIO_PIN_13
 #define BUTTON_GPIO_PORT GPIOC
+uint32_t buzzerStartTime = 0;
+uint32_t buttonPressTime = 0;
+uint32_t totalTime = 0;
+uint32_t pressCount = 0;
+float averageTime = 0.0;
+bool buzzerActive = false;
 /* USER CODE END PV */
 
 /* USER CODE BEGIN PFP */
@@ -30,13 +35,11 @@ static void MX_RTC_Init(void); // Placeholder for RTC initialization function
 
 int main(void) {
     /* USER CODE BEGIN 1 */
-    // (Add any additional initialization code here if needed)
+    // (Additional initialization code here if needed)
     /* USER CODE END 1 */
 
     /* MCU Configuration--------------------------------------------------------*/
     HAL_Init();
-
-    /* Configure the system clock */
     SystemClock_Config();
 
     /* Initialize all configured peripherals */
@@ -49,38 +52,46 @@ int main(void) {
     LCD_Init(); // Replace with your actual initialization function
 
     // Display a welcome message on LCD
-    LCD_Clear(); // Clear the LCD screen
-    LCD_SetCursor(0, 0); // Set cursor to the first line
-    LCD_Print("Medication"); // Print a message
-    LCD_SetCursor(1, 0); // Set cursor to the second line
-    LCD_Print("Reminder"); // Print a message
-
-    // ... (rest of your initialization code)
+    LCD_Clear();
+    LCD_SetCursor(0, 0);
+    LCD_Print("Medication");
+    LCD_SetCursor(1, 0);
+    LCD_Print("Reminder");
     /* USER CODE END 2 */
 
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
     while (1) {
         /* USER CODE BEGIN 3 */
-        // Check button state
-        if (HAL_GPIO_ReadPin(BUTTON_GPIO_PORT, BUTTON_PIN) == GPIO_PIN_SET) {
-            // If button is pressed, turn on the buzzer
+        // Example buzzer activation condition (modify as per your application logic)
+        if (/* condition to start buzzer */) {
             HAL_GPIO_WritePin(BUZZER_GPIO_PORT, BUZZER_PIN, GPIO_PIN_SET);
-        } else {
-            // If button is not pressed, turn off the buzzer
-            HAL_GPIO_WritePin(BUZZER_GPIO_PORT, BUZZER_PIN, GPIO_PIN_RESET);
+            buzzerStartTime = HAL_GetTick();
+            buzzerActive = true;
         }
 
-        // Additional application code as needed
+        // Check button state
+        if (HAL_GPIO_ReadPin(BUTTON_GPIO_PORT, BUTTON_PIN) == GPIO_PIN_SET && buzzerActive) {
+            HAL_GPIO_WritePin(BUZZER_GPIO_PORT, BUZZER_PIN, GPIO_PIN_RESET);
+            buzzerActive = false;
 
-        HAL_Delay(10); // Delay for debouncing and to prevent CPU hogging
+            // Calculate time taken and update average
+            buttonPressTime = HAL_GetTick();
+            uint32_t timeTaken = buttonPressTime - buzzerStartTime;
+            totalTime += timeTaken;
+            pressCount++;
+            averageTime = (float)totalTime / pressCount;
+
+            // Display the average time on the LCD or send it over UART
+            // LCD_Print("Avg Time: %f", averageTime); // Placeholder
+        }
+
+        HAL_Delay(10);
     }
     /* USER CODE END 3 */
 }
 
 void SystemClock_Config(void) {
-    RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-    RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
     //... (System clock configuration code)
 }
 
@@ -109,7 +120,7 @@ static void MX_USART2_UART_Init(void) {
 }
 
 static void MX_RTC_Init(void) {
-    //... (RTC initialization code - you need to implement this based on your RTC setup)
+    //... (RTC initialization code)
 }
 
 void Error_Handler(void) {
