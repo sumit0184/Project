@@ -1,174 +1,342 @@
 /* USER CODE BEGIN Header */
-//... (Header comments)
+/**
+  ******************************************************************************
+  * @file           : main.c
+  * @brief          : Main program body
+  ******************************************************************************
+  * @attention
+  *
+  * Copyright (c) 2023 STMicroelectronics.
+  * All rights reserved.
+  *
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
+  *
+  ******************************************************************************
+  */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "stm32f4xx_hal.h" // Adjust include path based on your HAL
 
+/* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "lcd_i2c.h" // Include your LCD library here
+#include "liquidcrystal_i2c.h"
 /* USER CODE END Includes */
 
+/* Private typedef -----------------------------------------------------------*/
+/* USER CODE BEGIN PTD */
+
+/* USER CODE END PTD */
+
+/* Private define ------------------------------------------------------------*/
+/* USER CODE BEGIN PD */
+
+/* USER CODE END PD */
+
+/* Private macro -------------------------------------------------------------*/
+/* USER CODE BEGIN PM */
+
+/* USER CODE END PM */
+
+/* Private variables ---------------------------------------------------------*/
+I2C_HandleTypeDef hi2c1;
+
+UART_HandleTypeDef huart2;
+
 /* USER CODE BEGIN PV */
-#define BUZZER_PIN GPIO_PIN_5
-#define BUZZER_GPIO_PORT GPIOA
-#define BUTTON_PIN GPIO_PIN_13
-#define BUTTON_GPIO_PORT GPIOC
-uint32_t buzzerStartTime = 0;
-uint32_t buttonPressTime = 0;
-uint32_t totalTime = 0;
-uint32_t pressCount = 0;
-float averageTime = 0.0;
-bool buzzerActive = false;
+
 /* USER CODE END PV */
 
-/* USER CODE BEGIN PFP */
+/* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
-static void MX_RTC_Init(void); // Placeholder for RTC initialization function
+static void MX_I2C1_Init(void);
+/* USER CODE BEGIN PFP */
+
 /* USER CODE END PFP */
 
+/* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-// (Add any custom user code here if needed)
+
 /* USER CODE END 0 */
 
-int main(void) {
-    /* USER CODE BEGIN 1 */
-    // (Additional initialization code here if needed)
-    /* USER CODE END 1 */
+/**
+  * @brief  The application entry point.
+  * @retval int
+  */
+int main(void)
+{
+  /* USER CODE BEGIN 1 */
 
-    /* MCU Configuration--------------------------------------------------------*/
-    HAL_Init();
-    SystemClock_Config();
+  /* USER CODE END 1 */
 
-    /* Initialize all configured peripherals */
-    MX_GPIO_Init();
-    MX_USART2_UART_Init();
-    MX_RTC_Init(); // Initialize RTC
+  /* MCU Configuration--------------------------------------------------------*/
 
-    /* USER CODE BEGIN 2 */
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+  HAL_Init();
+
+  /* USER CODE BEGIN Init */
+
+  /* USER CODE END Init */
+
+  /* Configure the system clock */
+  SystemClock_Config();
+
+  /* USER CODE BEGIN SysInit */
+
+  /* USER CODE END SysInit */
+
+  /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_USART2_UART_Init();
+  MX_I2C1_Init();
+  /* USER CODE BEGIN 2 */
   HD44780_Init(2);
-  HD44780_Clear();
-  HD44780_SetCursor(0,0);
-  HD44780_PrintStr("HELLO");
-  HD44780_SetCursor(10,1);
-  HD44780_PrintStr("WORLD");
-  HAL_Delay(2000);
+  /*HD44780_Clear();
+    HD44780_SetCursor(0,0);
+    HD44780_PrintStr("Hasnain");
+    HD44780_SetCursor(10,1);
+    HD44780_PrintStr("Azam");
+    HAL_Delay(2000);*/
 
-  HD44780_Clear();
-  HD44780_SetCursor(0,0);
-  HD44780_PrintStr("HELLO");
-  HAL_Delay(2000);
-  HD44780_NoBacklight();
-  HAL_Delay(2000);
-  HD44780_Backlight();
-
-  HAL_Delay(2000);
-  HD44780_Cursor();
-  HAL_Delay(2000);
-  HD44780_Blink();
-  HAL_Delay(5000);
-  HD44780_NoBlink();
-  HAL_Delay(2000);
-  HD44780_NoCursor();
-  HAL_Delay(2000);
-
-  HD44780_NoDisplay();
-  HAL_Delay(2000);
-  HD44780_Display();
-
-  HD44780_Clear();
-  HD44780_SetCursor(0,0);
-  HD44780_PrintStr("Learning STM32 with LCD is fun :-)");
-  int x;
-  for(int x=0; x<40; x=x+1)
-  {
-    HD44780_ScrollDisplayLeft();  //HD44780_ScrollDisplayRight();
-    HAL_Delay(500);
-  }
-
-  char snum[5];
-  for ( int x = 1; x <= 200 ; x++ )
-  {
-    itoa(x, snum, 10);
     HD44780_Clear();
     HD44780_SetCursor(0,0);
-    HD44780_PrintStr(snum);
-    HAL_Delay (1000);
-  }
-    /* USER CODE END 2 */
+    HD44780_PrintStr("HELLO Hasnain");
+    HAL_Delay(2000);
+    HD44780_NoBacklight();
+    HAL_Delay(2000);
+    HD44780_Backlight();
 
-    /* Infinite loop */
-    /* USER CODE BEGIN WHILE */
-    while (1) {
-        /* USER CODE BEGIN 3 */
-        // Example buzzer activation condition (modify as per your application logic)
-        if (/* condition to start buzzer */) {
-            HAL_GPIO_WritePin(BUZZER_GPIO_PORT, BUZZER_PIN, GPIO_PIN_SET);
-            buzzerStartTime = HAL_GetTick();
-            buzzerActive = true;
-        }
+    HAL_Delay(2000);
+    HD44780_Cursor();
+    HAL_Delay(2000);
+    HD44780_Blink();
+    HAL_Delay(5000);
+    HD44780_NoBlink();
+    HAL_Delay(2000);
+    HD44780_NoCursor();
+    HAL_Delay(2000);
 
-        // Check button state
-        if (HAL_GPIO_ReadPin(BUTTON_GPIO_PORT, BUTTON_PIN) == GPIO_PIN_SET && buzzerActive) {
-            HAL_GPIO_WritePin(BUZZER_GPIO_PORT, BUZZER_PIN, GPIO_PIN_RESET);
-            buzzerActive = false;
+    HD44780_NoDisplay();
+    HAL_Delay(2000);
+    HD44780_Display();
 
-            // Calculate time taken and update average
-            buttonPressTime = HAL_GetTick();
-            uint32_t timeTaken = buttonPressTime - buzzerStartTime;
-            totalTime += timeTaken;
-            pressCount++;
-            averageTime = (float)totalTime / pressCount;
-
-            // Display the average time on the LCD or send it over UART
-            // LCD_Print("Avg Time: %f", averageTime); // Placeholder
-        }
-
-        HAL_Delay(10);
+    HD44780_Clear();
+    HD44780_SetCursor(0,0);
+    HD44780_PrintStr("Medication time!");
+    for(int x=0; x<40; x=x+1)
+    {
+      HD44780_ScrollDisplayLeft();
+      HAL_Delay(500);
     }
-    /* USER CODE END 3 */
+
+    uint32_t startTick = HAL_GetTick(); // Get the current tick
+       while(HAL_GetTick() - startTick < 60000) // Run the loop for 3 minutes (180000 milliseconds)
+       {
+         HAL_GPIO_WritePin(GPIOA, GPIO_PIN_10, GPIO_PIN_SET);  // Turn on the buzzer
+         HAL_Delay(15000); // Buzzer on for 15 seconds
+
+         HAL_GPIO_WritePin(GPIOA, GPIO_PIN_10, GPIO_PIN_RESET); // Turn off the buzzer
+         HAL_Delay(5000); // Buzzer off for 5 seconds
+       }
+
+  /* USER CODE END 2 */
+
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
+  while (1)
+  {
+    /* USER CODE END WHILE */
+
+    /* USER CODE BEGIN 3 */
+  }
+  /* USER CODE END 3 */
 }
 
-void SystemClock_Config(void) {
-    //... (System clock configuration code)
+/**
+  * @brief System Clock Configuration
+  * @retval None
+  */
+void SystemClock_Config(void)
+{
+  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+
+  /** Configure the main internal regulator output voltage
+  */
+  __HAL_RCC_PWR_CLK_ENABLE();
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE2);
+
+  /** Initializes the RCC Oscillators according to the specified parameters
+  * in the RCC_OscInitTypeDef structure.
+  */
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+  RCC_OscInitStruct.PLL.PLLM = 16;
+  RCC_OscInitStruct.PLL.PLLN = 336;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
+  RCC_OscInitStruct.PLL.PLLQ = 7;
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Initializes the CPU, AHB and APB buses clocks
+  */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
 }
 
-static void MX_GPIO_Init(void) {
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
-    //... (GPIO initialization code)
+/**
+  * @brief I2C1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2C1_Init(void)
+{
 
-    /* USER CODE BEGIN 2 */
-    // Buzzer GPIO Initialization
-    GPIO_InitStruct.Pin = BUZZER_PIN;
-    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    HAL_GPIO_Init(BUZZER_GPIO_PORT, &GPIO_InitStruct);
+  /* USER CODE BEGIN I2C1_Init 0 */
 
-    // Button GPIO Initialization
-    GPIO_InitStruct.Pin = BUTTON_PIN;
-    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(BUTTON_GPIO_PORT, &GPIO_InitStruct);
-    /* USER CODE END 2 */
+  /* USER CODE END I2C1_Init 0 */
+
+  /* USER CODE BEGIN I2C1_Init 1 */
+
+  /* USER CODE END I2C1_Init 1 */
+  hi2c1.Instance = I2C1;
+  hi2c1.Init.ClockSpeed = 100000;
+  hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
+  hi2c1.Init.OwnAddress1 = 0;
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c1.Init.OwnAddress2 = 0;
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2C1_Init 2 */
+
+  /* USER CODE END I2C1_Init 2 */
+
 }
 
-static void MX_USART2_UART_Init(void) {
-    //... (USART2 initialization code)
+/**
+  * @brief USART2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART2_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART2_Init 0 */
+
+  /* USER CODE END USART2_Init 0 */
+
+  /* USER CODE BEGIN USART2_Init 1 */
+
+  /* USER CODE END USART2_Init 1 */
+  huart2.Instance = USART2;
+  huart2.Init.BaudRate = 115200;
+  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+  huart2.Init.StopBits = UART_STOPBITS_1;
+  huart2.Init.Parity = UART_PARITY_NONE;
+  huart2.Init.Mode = UART_MODE_TX_RX;
+  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART2_Init 2 */
+
+  /* USER CODE END USART2_Init 2 */
+
 }
 
-static void MX_RTC_Init(void) {
-    //... (RTC initialization code)
+/**
+  * @brief GPIO Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_GPIO_Init(void)
+{
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+/* USER CODE BEGIN MX_GPIO_Init_1 */
+/* USER CODE END MX_GPIO_Init_1 */
+
+  /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOH_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, LD2_Pin|GPIO_PIN_10, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : B1_Pin */
+  GPIO_InitStruct.Pin = B1_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : LD2_Pin PA10 */
+  GPIO_InitStruct.Pin = LD2_Pin|GPIO_PIN_10;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+/* USER CODE BEGIN MX_GPIO_Init_2 */
+/* USER CODE END MX_GPIO_Init_2 */
 }
 
-void Error_Handler(void) {
-    //... (Error Handler code)
+/* USER CODE BEGIN 4 */
+
+/* USER CODE END 4 */
+
+/**
+  * @brief  This function is executed in case of error occurrence.
+  * @retval None
+  */
+void Error_Handler(void)
+{
+  /* USER CODE BEGIN Error_Handler_Debug */
+  /* User can add his own implementation to report the HAL error return state */
+  __disable_irq();
+  while (1)
+  {
+  }
+  /* USER CODE END Error_Handler_Debug */
 }
 
-#ifdef USE_FULL_ASSERT
-void assert_failed(uint8_t *file, uint32_t line) {
-    //... (Assert Failed code)
+#ifdef  USE_FULL_ASSERT
+/**
+  * @brief  Reports the name of the source file and the source line number
+  *         where the assert_param error has occurred.
+  * @param  file: pointer to the source file name
+  * @param  line: assert_param error line source number
+  * @retval None
+  */
+void assert_failed(uint8_t *file, uint32_t line)
+{
+  /* USER CODE BEGIN 6 */
+  /* User can add his own implementation to report the file name and line number,
+     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+  /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
